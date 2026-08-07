@@ -8,24 +8,60 @@
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: sans-serif; background-color: #0f172a; color: #ffffff; text-align: center; margin: 0; padding: 15px; }
+    body { 
+      font-family: sans-serif; 
+      background-color: #0f172a; 
+      color: #ffffff; 
+      text-align: center; 
+      margin: 0; 
+      padding: 10px; 
+    }
     h1 { color: #38bdf8; font-size: 1.8rem; margin-bottom: 5px; }
     p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 15px; }
-    .stats-bar { background: #1e293b; display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; color: #4ade80; margin-bottom: 20px; border: 1px solid #334155; }
-    .wall-container { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; max-width: 700px; margin: 0 auto; background: #1e293b; padding: 10px; border-radius: 12px; }
+    
+    .stats-bar { 
+      background: #1e293b; 
+      display: inline-block; 
+      padding: 10px 20px; 
+      border-radius: 20px; 
+      font-weight: bold; 
+      color: #4ade80; 
+      margin-bottom: 20px; 
+      border: 1px solid #334155; 
+      font-size: 0.9rem;
+    }
+    .stats-bar span { color: #38bdf8; font-size: 1.1rem; }
+
+    /* تعديل الجدار ليكون ضخماً وقابلاً للتمرير */
+    .wall-wrapper {
+      max-width: 100%;
+      height: 65vh; /* تحديد ارتفاع الجدار ليناسب شاشة الهاتف */
+      overflow: auto; /* إضافة شريط تمرير (Scroll) */
+      background: #1e293b; 
+      padding: 10px; 
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+
+    /* استخدام شبكة متجاوبة تصغر المربعات لتشمل أكبر عدد ممكن */
+    .wall-container { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(15px, 1fr)); 
+      gap: 2px; 
+    }
     
     .pixel { 
       aspect-ratio: 1; 
       background-color: #334155; 
-      border-radius: 3px; 
+      border-radius: 2px; 
       cursor: pointer; 
-      border: 1px solid #475569; 
       background-size: cover; 
       background-position: center;
       position: relative;
       overflow: hidden;
+      transition: transform 0.2s;
     }
-    .pixel:hover { border-color: #38bdf8; transform: scale(1.15); z-index: 2; }
+    .pixel:hover { border: 1px solid #38bdf8; transform: scale(1.5); z-index: 2; }
     
     .pixel .owner-name {
       display: none;
@@ -35,44 +71,49 @@
       right: 0;
       background: rgba(0,0,0,0.85);
       color: #fff;
-      font-size: 0.55rem;
+      font-size: 0.4rem;
       padding: 1px;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     .pixel:hover .owner-name { display: block; }
 
+    /* نوافذ الدفع */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9; }
     .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #38bdf8; z-index: 10; width: 85%; max-width: 350px; text-align: left; }
     .modal h3 { margin-top: 0; color: #38bdf8; text-align: center; }
     .modal label { display: block; margin-top: 10px; font-size: 0.85rem; color: #cbd5e1; }
     .modal input { width: 100%; padding: 8px; margin-top: 5px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; }
     .modal button { width: 100%; padding: 12px; margin-top: 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; }
-    .btn-pay { background: #ab9ff2; color: #0f172a; } /* لون براند محفظة Phantom */
+    
+    .btn-pay { background: #ab9ff2; color: #0f172a; } /* لون Phantom */
     .btn-close { background: #475569; color: #fff; margin-top: 8px !important; }
   </style>
 </head>
 <body>
 
   <h1>The $1,000,000 Wall 2026</h1>
-  <p>Pay 1-Click via <strong>Phantom Wallet</strong> & Claim Instantly</p>
+  <p>Pay 1-Click via <strong>Phantom Wallet</strong> & Claim $1 per Pixel</p>
   
   <div class="stats-bar">
-    Claimed: <span id="counter">0</span> / 1000
+    Claimed: <span id="counter">0</span> / 1,000,000 | Raised: $<span id="money">0</span>
   </div>
 
-  <div class="wall-container" id="wall"></div>
+  <div class="wall-wrapper">
+    <div class="wall-container" id="wall"></div>
+  </div>
+
   <div class="modal-overlay" id="overlay" onclick="closeModal()"></div>
 
   <div class="modal" id="modal">
     <h3>Claim Pixel <span id="square-num"></span></h3>
     <label>Your Name / Brand:</label>
-    <input type="text" id="username" placeholder="e.g. Alex">
+    <input type="text" id="username" placeholder="e.g. Alex / My Company">
     
     <label>Your Image Link (URL):</label>
     <input type="text" id="userimg" placeholder="https://example.com/image.png">
 
-    <button class="btn-pay" id="pay-btn" onclick="payWithPhantom()">Pay $1 via Phantom & Claim</button>
+    <button class="btn-pay" id="pay-btn" onclick="payWithPhantom()">Pay $1 via Phantom</button>
     <button class="btn-close" onclick="closeModal()">Cancel</button>
   </div>
 
@@ -85,10 +126,13 @@
     const overlay = document.getElementById('overlay');
     const squareNum = document.getElementById('square-num');
     const counter = document.getElementById('counter');
+    const money = document.getElementById('money');
     let currentSquare = null;
 
-    // إنشاء 1000 مربع
-    for (let i = 1; i <= 1000; i++) {
+    // تم ضبط المربعات المعروضة على 10,000 لحماية متصفح الهاتف من الانهيار
+    const RENDERED_PIXELS = 10000; 
+
+    for (let i = 1; i <= RENDERED_PIXELS; i++) {
       const pixel = document.createElement('div');
       pixel.className = 'pixel';
       pixel.id = `square-${i}`;
@@ -113,7 +157,6 @@
       overlay.style.display = 'none';
     }
 
-    // آلية الدفع المباشر بنقرة واحدة عبر Phantom
     async function payWithPhantom() {
       const name = document.getElementById('username').value;
       const imgUrl = document.getElementById('userimg').value;
@@ -130,16 +173,14 @@
           const btn = document.getElementById('pay-btn');
           btn.innerText = "Connecting Phantom...";
 
-          // الاتصال بالمحفظة
           const resp = await window.solana.connect();
           const provider = window.solana;
 
           btn.innerText = "Confirming $1 Payment...";
 
-          // إعداد الاتصال بشبكة Solana
           const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
 
-          // تحويل ما يعادل $1 عملة SOL (تقريباً 0.007 SOL)
+          // ما يعادل تقريباً 1 دولار بعمله SOL (حوالي 7 مليون لامبورت)
           const lamports = 7000000; 
 
           const transaction = new solanaWeb3.Transaction().add(
@@ -154,7 +195,6 @@
           let { blockhash } = await connection.getLatestBlockhash();
           transaction.recentBlockhash = blockhash;
 
-          // توقيع المعاملة وإرسالها بضغطة زر واحدة من المحفظة
           const { signature } = await provider.signAndSendTransaction(transaction);
           
           applyOwnership(currentSquare, name, imgUrl);
@@ -164,10 +204,10 @@
         } catch (err) {
           alert("Payment canceled or failed: " + err.message);
         } finally {
-          document.getElementById('pay-btn').innerText = "Pay $1 via Phantom & Claim";
+          document.getElementById('pay-btn').innerText = "Pay $1 via Phantom";
         }
       } else {
-        // العرض المباشر (Demo Mode) في حال فتح الموقع من متصفح لا يحتوي على المحفظة
+        // العرض المباشر للتجربة
         applyOwnership(currentSquare, name, imgUrl);
         alert("Phantom Wallet not detected! Displaying pixel in Demo Mode.");
         closeModal();
@@ -179,8 +219,12 @@
       sq.style.backgroundImage = `url('${imgUrl}')`;
       sq.querySelector('.owner-name').innerText = name;
       
-      let count = parseInt(counter.innerText);
-      counter.innerText = count + 1;
+      // تحديث العداد والمبلغ المجموع
+      let count = parseInt(counter.innerText.replace(/,/g, ''));
+      let currentMoney = parseInt(money.innerText.replace(/,/g, ''));
+      
+      counter.innerText = (count + 1).toLocaleString();
+      money.innerText = (currentMoney + 1).toLocaleString();
     }
   </script>
 </body>
